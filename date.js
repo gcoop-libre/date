@@ -1154,7 +1154,7 @@ function theme_datetime(variables) {
     // Render the widget based on its type.
     var widget_type = variables.field_info_instance.widget.type;
     var widget_function = 'theme_' + widget_type;
-    if (drupalgap_function_exists(widget_function)) {
+    if (function_exists(widget_function)) {
       var fn = window[widget_function];
       html += fn.call(null, variables);
     }
