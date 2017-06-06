@@ -382,7 +382,7 @@ function _date_get_item_and_offset(items, delta, _value, value_set, value2_set, 
   catch (error) { console.log('_date_get_item_and_offset', error); }
 }
 
-function _date_widget_check_and_set_defaults(items, delta, instance, d) {
+function _date_widget_check_and_set_defaults(items, delta, instance, todate, d) {
   try {
 
     // Determine if value and value_2 have been set for this item.
@@ -401,7 +401,7 @@ function _date_widget_check_and_set_defaults(items, delta, instance, d) {
     if (!value_set && (items[delta].default_value == '' || !items[delta].default_value) && instance.settings.default_value != '') {
       items[delta].default_value = instance.settings.default_value;
     }
-    if (!value2_set && (items[delta].default_value2 == '' || !items[delta].default_value2) && instance.settings.default_value2 != '') {
+    if (!value2_set && (!empty(todate)) && (items[delta].default_value2 == '' || !items[delta].default_value2) && instance.settings.default_value2 != '') {
       items[delta].default_value2 = instance.settings.default_value2;
     }
 
@@ -427,7 +427,7 @@ function _date_widget_check_and_set_defaults(items, delta, instance, d) {
         items[delta].item.value = items[delta].value;
       }
     }
-    if (!value2_set && items[delta].default_value2 != '') {
+    if (!value2_set && typeof(items[delta].default_value2) != 'undefined' && items[delta].default_value2 != '') {
       switch (items[delta].default_value2) {
         case 'now':
           var now = date_yyyy_mm_dd_hh_mm_ss(date_yyyy_mm_dd_hh_mm_ss_parts(d));

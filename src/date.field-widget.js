@@ -26,7 +26,7 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
     d.setMinutes(_date_minute_increment_adjust(increment, d.getMinutes()));
 
     // Check and set default values, and items[delta] values.
-    var date_values_set = _date_widget_check_and_set_defaults(items, delta, instance, d);
+    var date_values_set = _date_widget_check_and_set_defaults(items, delta, instance, todate, d);
     var value_set =  date_values_set.value_set;
     var value2_set =  date_values_set.value2_set;
 
