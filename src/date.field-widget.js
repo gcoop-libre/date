@@ -69,92 +69,100 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
       // Are we doing a 12 or 24 hour format?
       var military = date_military(instance);
 
-      // For each grain of the granularity, add it as a child to the form element. As we
-      // build the child widgets we'll set them aside one by one that way we can present
-      // the inputs in a desirable order later at render time.
-      var _widget_year = null;
-      var _widget_month = null;
-      var _widget_day = null;
-      var _widget_hour = null;
-      var _widget_minute = null;
-      var _widget_second = null;
-      var _widget_ampm = null;
-      $.each(field.settings.granularity, function(grain, value) {
-        if (value) {
+      switch (instance.widget.type) {
+        case 'date_select':
+          // For each grain of the granularity, add it as a child to the form element. As we
+          // build the child widgets we'll set them aside one by one that way we can present
+          // the inputs in a desirable order later at render time.
+          var _widget_year = null;
+          var _widget_month = null;
+          var _widget_day = null;
+          var _widget_hour = null;
+          var _widget_minute = null;
+          var _widget_second = null;
+          var _widget_ampm = null;
+          $.each(field.settings.granularity, function(grain, value) {
+            if (value) {
 
-          // Build a unique html element id for this select list. Set up an
-          // onclick handler and send it the id of the hidden input that will
-          // hold the date value.
-          var id = items[delta].id;
-          if (_value == 'value2') { id += '2'; } // "To date"
-          id += '-' + grain;
-          var attributes = {
-            id: id,
-            onchange: "date_select_onchange(this, '" + items[delta].id + "', '" + grain + "', " + military + ", " + increment + ", " + offset + ")"
-          };
-          switch (grain) {
+              // Build a unique html element id for this select list. Set up an
+              // onclick handler and send it the id of the hidden input that will
+              // hold the date value.
+              var id = items[delta].id;
+              if (_value == 'value2') { id += '2'; } // "To date"
+              id += '-' + grain;
+              var attributes = {
+                id: id,
+                onchange: "date_select_onchange(this, '" + items[delta].id + "', '" + grain + "', " + military + ", " + increment + ", " + offset + ")"
+              };
+              switch (grain) {
 
-            // YEAR
-            case 'year':
-              _widget_year = _date_grain_widget_year(date, instance, attributes, value_set, value2_set, item_date);
-              break;
+                // YEAR
+                case 'year':
+                  _widget_year = _date_grain_widget_year(date, instance, attributes, value_set, value2_set, item_date);
+                  break;
 
-            // MONTH
-            case 'month':
-              _widget_month = _date_grain_widget_month(date, instance, attributes, value_set, value2_set, item_date);
-              break;
+                // MONTH
+                case 'month':
+                  _widget_month = _date_grain_widget_month(date, instance, attributes, value_set, value2_set, item_date);
+                  break;
 
-            // DAY
-            case 'day':
-              _widget_day = _date_grain_widget_day(date, instance, attributes, value_set, value2_set, item_date);
-              break;
+                // DAY
+                case 'day':
+                  _widget_day = _date_grain_widget_day(date, instance, attributes, value_set, value2_set, item_date);
+                  break;
 
-            // HOUR
-            case 'hour':
-              _widget_hour = _date_grain_widget_hour(date, instance, attributes, value_set, value2_set, item_date, military);
+                // HOUR
+                case 'hour':
+                  _widget_hour = _date_grain_widget_hour(date, instance, attributes, value_set, value2_set, item_date, military);
 
-              // Add an am/pm selector if we're not in military time.
-              if (!military) {
-                _widget_ampm = _date_grain_widget_ampm(date, instance, attributes, value_set, value2_set, item_date, military);
+                  // Add an am/pm selector if we're not in military time.
+                  if (!military) {
+                    _widget_ampm = _date_grain_widget_ampm(date, instance, attributes, value_set, value2_set, item_date, military);
+                  }
+                  break;
+
+                // MINUTE
+                case 'minute':
+                  _widget_minute = _date_grain_widget_minute(date, instance, attributes, value_set, value2_set, item_date, _value, increment);
+                  break;
+
+                // SECOND
+                case 'second':
+                  _widget_second = _date_grain_widget_second(date, instance, attributes, value_set, value2_set, item_date, _value);
+                  break;
+
+                default:
+                  console.log('WARNING: date_field_widget_form() - unsupported grain! (' + grain + ')');
+                  break;
               }
-              break;
+            }
+          });
 
-            // MINUTE
-            case 'minute':
-              _widget_minute = _date_grain_widget_minute(date, instance, attributes, value_set, value2_set, item_date, _value, increment);
-              break;
-
-            // SECOND
-            case 'second':
-              _widget_second = _date_grain_widget_second(date, instance, attributes, value_set, value2_set, item_date, _value);
-              break;
-
-            default:
-              console.log('WARNING: date_field_widget_form() - unsupported grain! (' + grain + ')');
-              break;
+          // Show the "from" or "to" label?
+          if (!empty(todate)) {
+            var text = _value != 'value2' ? t('From') : t('To');
+            items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
           }
-        }
-      });
 
-      // Show the "from" or "to" label?
-      if (!empty(todate)) {
-        var text = _value != 'value2' ? t('From') : t('To');
-        items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
+          // Wrap the widget with some better UX.
+          _date_grain_widgets_ux_wrap(
+              items,
+              delta,
+              _widget_year,
+              _widget_month,
+              _widget_day,
+              _widget_hour,
+              _widget_minute,
+              _widget_second,
+              _widget_ampm
+          );
+          break;
+        case 'date_popup':
+        case 'date_text':
+        default:
+          items[delta].type = 'text';
+          break;
       }
-
-      // Wrap the widget with some better UX.
-      _date_grain_widgets_ux_wrap(
-          items,
-          delta,
-          _widget_year,
-          _widget_month,
-          _widget_day,
-          _widget_hour,
-          _widget_minute,
-          _widget_second,
-          _widget_ampm
-      );
-
     });
 
     // If the field base is configured for the "date's timezone handling", add a timezone picker to the widget.
