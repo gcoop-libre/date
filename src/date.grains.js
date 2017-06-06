@@ -273,7 +273,14 @@ function _date_grain_widgets_ux_wrap(items, delta, _widget_year, _widget_month, 
       }
       items[delta].children.push(_widget_minute);
     }
-    if (_widget_second) { items[delta].children.push(_widget_second); }
+    if (_widget_second) {
+      if (his_grid) {
+        var _block_class = _widget_minute ? 'ui-block-c' : 'ui-block-b';
+        _widget_second.prefix = '<div class="' + _block_class + '">' + _widget_second.prefix;
+        _widget_second.suffix = '</div>';
+      }
+      items[delta].children.push(_widget_second);
+    }
     if (_widget_ampm) { items[delta].children.push(_widget_ampm); }
     if (his_grid) { items[delta].children.push({ markup: '</div>' }); }
   }
