@@ -10,18 +10,18 @@ function date_views_exposed_filter(form, form_state, element, filter, field) {
         title: t("Operator"),
         type: "select",
         options: {
-          "&lt;": "Is less than",
-          "&lt;=": "Is less than or equal to",
-          "=": "Is equal to",
-          "!=": "Is not equal to",
-          "&gt;=": "Is greater than or equal to",
-          "&gt;": "Is greater than",
-          "between": "Is between",
-          "not between": "Is not between",
-          "empty": "Is empty (NULL)",
-          "not empty": "Is not empty (NOT NULL)",
-          "regular_expression": "Regular expression",
-          "contains": "Contains"
+          "&lt;": t("Is less than"),
+          "&lt;=": t("Is less than or equal to"),
+          "=": t("Is equal to"),
+          "!=": t("Is not equal to"),
+          "&gt;=": t("Is greater than or equal to"),
+          "&gt;": t("Is greater than"),
+          "between": t("Is between"),
+          "not between": t("Is not between"),
+          "empty": t("Is empty (NULL)"),
+          "not empty": t("Is not empty (NOT NULL)"),
+          "regular_expression": t("Regular expression"),
+          "contains": t("Contains")
         }
       }
     }
