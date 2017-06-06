@@ -59,7 +59,6 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
 
         var d = null;
         if (_value == 'value') {
-          d = new Date(parts[0]);
           if (have_item) {
             var offset = parseInt(form.elements[field.field_name][langcode][delta].item.offset);
             if (offset) { result.offset = offset; }
@@ -68,11 +67,32 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
               d = d.getTime() / 1000;
               d -= parseInt(offset);
               d = new Date(d * 1000);
+            } else if (date_apple_device()) {
+              // console.log('--- date_apple_device 1 ---');
+              date = new Date(date_apple_cleanse(parts[0]));
+              date = date.getTime() + (date.getTimezoneOffset() * 60000);
+              date = new Date(date);
+            } else {// 
+              date = new Date(parts[0]);
+            }
+          } else {
+            // console.log('does not have_item', have_item);
+            if (date_apple_device() && offset) {
+              date = new Date(date.toUTCString());
+              date = date.getTime() / 1000;
+              date -= parseInt(offset);
+              date = new Date(date * 1000);
+            } else if (date_apple_device()) {
+              // console.log('--- date_apple_device 2 ---');
+              date = new Date(date_apple_cleanse(parts[0]));
+              date = date.getTime() + (date.getTimezoneOffset() * 60000);
+              date = new Date(date);
+            } else {
+              date = new Date(parts[0]);
             }
           }
         }
         else if (_value == 'value2') {
-          d = new Date(parts[1]);
           if (have_item) {
             var offset2 = parseInt(form.elements[field.field_name][langcode][delta].item.offset2);
             if (offset2) { result.offset2 = offset2; }
@@ -81,6 +101,25 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
               d = d.getTime() / 1000;
               d -= parseInt(offset2);
               d = new Date(d * 1000);
+            } else if (date_apple_device()) {
+              date = new Date(date_apple_cleanse(parts[1]));
+              date = date.getTime() + (date.getTimezoneOffset() * 60000);
+              date = new Date(date);
+            } else {
+              date = new Date(parts[1]);
+            }
+          } else {
+            if (date_apple_device() && offset2) {
+              date = new Date(date.toUTCString());
+              date = date.getTime() / 1000;
+              date -= parseInt(offset2);
+              date = new Date(date * 1000);
+            } else if (date_apple_device()) {
+              date = new Date(date_apple_cleanse(parts[1]));
+              date = date.getTime() + (date.getTimezoneOffset() * 60000);
+              date = new Date(date);
+            } else {
+              date = new Date(parts[1]);
             }
           }
         }
@@ -109,7 +148,10 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
                   if (result[_value].hour >= 12) {
                     result[_value].hour = result[_value].hour % 12;
                     result[_value].ampm = 'pm';
+                  } else {
+                    result[_value].ampm = 'am';
                   }
+                  if (result[_value].hour == 0) { result[_value].hour = 12; }
                 }
                 break;
               case 'minute':

@@ -47,18 +47,58 @@ function date_field_formatter_view(entity_type, entity, field, instance, langcod
       // Now iterate over the items and render them using the format.
       // @TODO might need to do the "T" stuff for iOS and/or Safari
       $.each(items, function(delta, item) {
-        var value2_present = typeof item.value2 !== 'undefined' ? true: false;
-        var label = value2_present ? 'From: ' : '';
+        // prepare date formats
+        var format_full = 'D, j F Y - g:i a';
+        var format_day = 'D, j F Y';
+        var format_time = 'g:i a';
+
+        // prepare 'From:' date value
         var d = date_prepare(item.value);
-        element[delta] = {
-          markup: '<div class="value">' + label + date(format, d.getTime()) + '</div>'
-        };
+
+        // check to see if there is a 'To:' date
+        var value2_present = (typeof(item.value2) !== 'undefined') ? (true) : (false);
+
         if (value2_present) {
+          // prepare 'To:' date value
           var d2 = date_prepare(item.value2);
-          element[delta].markup += '<div class="value2">To: ' + date(format, d2.getTime()) + '</div>';
+          var from_day = date(format_day, d.getTime());
+          var to_day = date(format_day, d2.getTime());
+
+          // get hour for 'To:' date
+          var to_hour = date('g', d2.getTime());
+
+          // correct the 0 hour to 12 for 12pm
+          if (to_hour == '0') {
+            var to_time = '12' + date(':i a', d2.getTime());;
+          } else {
+            var to_time = date(format_time, d2.getTime());
+          }
+
+          // get hour for 'From:' date
+          var from_hour = date('g', d.getTime());
+          if (from_hour == '0') {
+            var from_hour = '12' + date(':i a', d.getTime());;
+          } else {
+            var from_hour = date(format_time, d.getTime());
+          }
+
+          if (from_day == to_day) {
+            element[delta] = {
+              markup: '<div class="value">' + from_day + ' - ' + from_hour + ' to ' + to_time + '</div>'
+            };
+          } else {
+            var label = value2_present ? 'From: ' : '';
+            element[delta] = {
+              markup: '<div class="value">' + label + date(format_full, d.getTime()) + '</div>'
+            };
+            element[delta].markup += '<div class="value2">To: ' + date(format_full, d2.getTime()) + '</div>';
+          }
+        } else {
+          element[delta] = {
+            markup: '<div class="value">' + label + date(format_full, d.getTime()) + '</div>'
+          };
         }
       });
-
     }
     else if (type == 'format_interval') {
       var interval = display.settings.interval;

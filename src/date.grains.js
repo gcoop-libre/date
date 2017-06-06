@@ -127,6 +127,26 @@ function _date_grain_widget_hour(date, instance, attributes, value_set, value2_s
   catch (error) { console.log('_date_grain_widget_hour', error); }
 }
 
+function _date_grain_widget_ampm(date, instance, attributes, value_set, value2_set, item_date, military) {
+  try {
+    var ampm = parseInt(date.getHours()) < 12 ? 'am' : 'pm';
+    if (value_set) {
+      ampm = parseInt(item_date.getHours()) < 12 ? 'am' : 'pm';
+    }
+    
+    return {
+      type: 'date_select',
+      value: ampm,
+      attributes: attributes,
+      options: {
+        am: 'am',
+        pm: 'pm'
+      } 
+    };
+  }
+  catch (error) { console.log('_date_grain_widget_day', error); }
+}
+
 function _date_grain_widget_minute(date, instance, attributes, value_set, value2_set, item_date, _value, increment) {
   try {
     // Determine the current minute.

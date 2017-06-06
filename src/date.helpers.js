@@ -82,33 +82,47 @@ function date_select_onchange(input, id, grain, military, increment, offset) {
     // Get the date for the current value, or just default to now.
     //console.log('parts before', parts);
     var date = null;
-    if (!current_val) { date = new Date(); }
-    else {
+    if (!current_val) {
+      if (date_apple_device()) {
+        item_date = new Date();
+        item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+        date = new Date(item_date);
+      } else {
+        date = new Date();
+      }
+    } else {
 
       // In case they set the "to date" before the "from date", give the "from date" a default value.
       if (!todate && empty(parts[0])) { parts[0] = date_yyyy_mm_dd_hh_mm_ss(); }
 
       //Fixes iOS bug spaces must be replaced with T's
-      if (date_apple_device()) {
-
+      if (date_apple_device() && offset) {
+        // TODO  -- update to reflect code below
+        date = date_item_adjust_offset(date, offset);
+      } else if (date_apple_device()) {
         if (!todate) {
-          parts[0] = date_apple_cleanse(parts[0]);
+          item_date = new Date(date_apple_cleanse(parts[0]));
+          item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+          date = new Date(item_date);
         }
         else {
           if (todate_already_set) {
-            parts[1] = date_apple_cleanse(parts[1]);
+            item_date = new Date(date_apple_cleanse(parts[1]));
+            item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+            date = new Date(item_date);
+          }
+        }
+      } else {
+        if (!todate) {
+          date = new Date(parts[0]);
+        } else {
+          if (todate_already_set) {
+            date = new Date(parts[1]);
+          } else {
+            date = new Date();
           }
         }
       }
-
-      if (!todate) { date = new Date(parts[0]); }
-      else {
-        if (todate_already_set) { date = new Date(parts[1]); }
-        else { date = new Date(); }
-      }
-
-      if (date_apple_device() && offset) { date = date_item_adjust_offset(date, offset); }
-
     }
     //console.log('parts after', parts);
 
@@ -125,42 +139,26 @@ function date_select_onchange(input, id, grain, military, increment, offset) {
         break;
       case 'hour':
         if (!military) {
+          var currenthour = date.getHours();
+          if (input_val == 'pm') {
+            if (date.getHours() < 12) { date.setHours(date.getHours() + 12); }
+            else { date.setHours(date.getHours()); }
+          }
+          else if (input_val == 'am') { date.setHours(date.getHours() - 12); }
+
           input_val = parseInt(input_val);
-          var ampm_input = $('#' + $(input).attr('id').replace(grain, 'ampm'));
-          var ampm_input_value = $(ampm_input).val();
-          switch (ampm_input_value) {
-            case 'am':
-              if (input_val == 12) { input_val = 0; }
-              date.setHours(input_val);
-              break;
-            case 'pm':
-              if (input_val == 12) { input_val = 0; }
-              date.setHours(input_val + 12);
-              break;
+          if (input_val >= 0 && currenthour > 12) {
+            date.setHours(input_val + 12);
+          } else if (input_val >= 0 && currenthour < 12) {
+            date.setHours(input_val);
+          } else if (input_val >= 0 && currenthour == 12) {
+            date.setHours(0);
           }
         }
         else { date.setHours(input_val); }
         break;
       case 'minute':
         date.setMinutes(input_val);
-        break;
-      case 'ampm':
-
-        // Stop if they picked the same val twice.
-        if (input.date_ampm_old_value == input_val ||
-          (
-            typeof input.date_ampm_old_value === 'undefined' &&
-            $(input).attr('date_ampm_original_value') == input_val
-          )
-        ) { return; }
-
-        // Adjust the hours by +/- 12 as needed.
-        if (input_val == 'pm') {
-          if (date.getHours() < 12) { date.setHours(date.getHours() + 12); }
-          else { date.setHours(date.getHours()); }
-        }
-        else if (input_val == 'am') { date.setHours(date.getHours() - 12); }
-
         break;
     }
 
@@ -312,17 +310,35 @@ function _date_get_item_and_offset(items, delta, _value, value_set, value2_set, 
     if (value_set && _value == 'value') {
       if (items[delta].value.indexOf('|') != -1) {
         var parts = items[delta].value.split('|');
-        item_date = new Date(!date_apple_device() ? parts[0] : date_apple_cleanse(parts[0]));
+        if(!date_apple_device()){
+          item_date = new Date(parts[0]);
+        } else {
+          item_date = new Date(date_apple_cleanse(parts[0]));
+          item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+          item_date = new Date(item_date);
+        }
       }
       else {
-        item_date = new Date(!date_apple_device() ? items[delta].value : date_apple_cleanse(items[delta].value));
+        if(!date_apple_device()){
+          item_date = new Date(items[delta].value);
+        } else {
+          item_date = new Date(date_apple_cleanse(items[delta].value));
+          item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+          item_date = new Date(item_date);
+        }
       }
       if (items[delta].item && items[delta].item.offset) {
         offset = items[delta].item.offset;
       }
     }
     if (value2_set && _value == 'value2') {
-      item_date = new Date(!date_apple_device() ? items[delta].item.value2 : date_apple_cleanse(items[delta].item.value2));
+      if(!date_apple_device()){
+        item_date = new Date(items[delta].item.value2);
+      } else {
+        item_date = new Date(date_apple_cleanse(items[delta].item.value2));
+        item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+        item_date = new Date(item_date);
+      }
       if (items[delta].item && items[delta].item.offset2) {
         offset = items[delta].item.offset2;
       }

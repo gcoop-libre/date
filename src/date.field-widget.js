@@ -34,14 +34,21 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
     // on this item, otherwise the DG FAPI will default it to the item's value, which is only the first part of the
     // date.
     if (value2_set && items[delta].value.indexOf('|') == -1) {
-      items[delta].value += '|' + items[delta].value2;
+      items[delta].value += '|' + items[delta].item.value2;
       if (!items[delta].attributes) { items[delta].attributes = {}; }
       items[delta].attributes.value = items[delta].value;
     }
 
     // Grab the current date.
-    var date = new Date();
-
+    if (date_apple_device()) {
+      // console.log('--- APPLE DEVICE --- (Grab the current date)');
+      var date = new Date();
+      var date = date.getTime() + (date.getTimezoneOffset() * 60000);
+      var date = new Date(date);
+    } else {
+      // console.log('--- NON APPLE DEVICE --- (Grab the current date)');
+      var date = new Date();
+    }
 
     // Depending if we are collecting an end date or not, build a widget for each date value.
     var values = ['value'];
@@ -106,26 +113,9 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
             case 'hour':
               _widget_hour = _date_grain_widget_hour(date, instance, attributes, value_set, value2_set, item_date, military);
 
-              // Add an am/pm selector if we're not in military time. Hang onto the old value so we
-              // can prevent the +/- 12 adjustment from happening if the user selects the same
-              // thing twice.
+              // Add an am/pm selector if we're not in military time.
               if (!military) {
-                var onclick = attributes.onchange.replace(grain, 'ampm') +
-                    '; this.date_ampm_old_value = this.value;';
-                var ampm_value =  parseInt(item_date.getHours()) < 12 ? 'am' : 'pm';
-                _widget_ampm = {
-                  type: 'select',
-                  attributes: {
-                    id: attributes.id.replace(grain, 'ampm'),
-                    onclick: onclick,
-                    date_ampm_original_value: ampm_value
-                  },
-                  value: ampm_value,
-                  options: {
-                    am: 'am',
-                    pm: 'pm'
-                  }
-                };
+                _widget_ampm = _date_grain_widget_ampm(date, instance, attributes, value_set, value2_set, item_date, military);
               }
               break;
 
