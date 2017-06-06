@@ -275,7 +275,7 @@ function _date_grain_widgets_ux_wrap(items, delta, _widget_year, _widget_month, 
     }
     if (_widget_second) { items[delta].children.push(_widget_second); }
     if (_widget_ampm) { items[delta].children.push(_widget_ampm); }
-    if (ymd_grid) { items[delta].children.push({ markup: '</div>' }); }
+    if (his_grid) { items[delta].children.push({ markup: '</div>' }); }
   }
   catch (error) { console.log('_date_grain_widgets_ux_wrap', error); }
 }
