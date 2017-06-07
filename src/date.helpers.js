@@ -160,6 +160,9 @@ function date_select_onchange(input, id, grain, military, increment, offset) {
       case 'minute':
         date.setMinutes(input_val);
         break;
+      case 'second':
+        date.setSeconds(input_val);
+        break;
     }
 
     // Adjust the minutes.
