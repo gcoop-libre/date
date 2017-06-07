@@ -16,7 +16,8 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
 
     //console.log('assemble', arguments);
 
-    field_key.use_delta = false;
+    field_key.use_key = false;
+    field_key.use_delta = true;
 
     // Grab our "to date" setting for the field.
     var todate = field.settings.todate;
@@ -124,13 +125,7 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
           }
         }
 
-        if (instance.widget.type == 'date_text') {
-          result[_value].date = date(instance.widget.settings.input_format, d);
-          // Support seconds.
-          result[_value].date = result[_value].date.replace("s", d.getSeconds());
-        }
-        else {
-           // instance.widget.type == 'date_select'.
+        if (instance.widget.type == 'date_select') {
           if (value) {
             switch (grain) {
               case 'year':
@@ -158,17 +153,25 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
                 result[_value].minute = '' + parseInt(date.getMinutes());
                 if (result[_value].minute.length == 1) { result[_value].minute = '0' + result[_value].minute; }
                 break;
+              case 'second':
+                result[_value].second = '' + parseInt(date.getSeconds());
+                if (result[_value].second.length == 1) { result[_value].second = '0' + result[_value].second; }
+                break;
             }
           }
+        } else if (instance.widget.type == 'date_popup') {
+        } else {
+          result[_value].date = date(instance.widget.settings.input_format, d);
+          // Support seconds.
+          result[_value].date = result[_value].date.replace("s", d.getSeconds());
         }
       }
 
-      if (instance.widget.type == 'date_text') {
-        _date_set_attribute_on_value(null, null);
-      }
-      else {
-         // instance.widget.type == 'date_select'.
+      if (instance.widget.type == 'date_select') {
         $.each(field.settings.granularity, _date_set_attribute_on_value);
+      } else if (instance.widget.type == 'date_popup') {
+      } else {
+        _date_set_attribute_on_value(null, null);
       }
 
     });
