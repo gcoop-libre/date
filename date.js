@@ -155,7 +155,7 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
     d.setMinutes(_date_minute_increment_adjust(increment, d.getMinutes()));
 
     // Check and set default values, and items[delta] values.
-    var date_values_set = _date_widget_check_and_set_defaults(items, delta, instance, d);
+    var date_values_set = _date_widget_check_and_set_defaults(items, delta, instance, todate, d);
     var value_set =  date_values_set.value_set;
     var value2_set =  date_values_set.value2_set;
 
@@ -198,92 +198,100 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
       // Are we doing a 12 or 24 hour format?
       var military = date_military(instance);
 
-      // For each grain of the granularity, add it as a child to the form element. As we
-      // build the child widgets we'll set them aside one by one that way we can present
-      // the inputs in a desirable order later at render time.
-      var _widget_year = null;
-      var _widget_month = null;
-      var _widget_day = null;
-      var _widget_hour = null;
-      var _widget_minute = null;
-      var _widget_second = null;
-      var _widget_ampm = null;
-      $.each(field.settings.granularity, function(grain, value) {
-        if (value) {
+      switch (instance.widget.type) {
+        case 'date_select':
+          // For each grain of the granularity, add it as a child to the form element. As we
+          // build the child widgets we'll set them aside one by one that way we can present
+          // the inputs in a desirable order later at render time.
+          var _widget_year = null;
+          var _widget_month = null;
+          var _widget_day = null;
+          var _widget_hour = null;
+          var _widget_minute = null;
+          var _widget_second = null;
+          var _widget_ampm = null;
+          $.each(field.settings.granularity, function(grain, value) {
+            if (value) {
 
-          // Build a unique html element id for this select list. Set up an
-          // onclick handler and send it the id of the hidden input that will
-          // hold the date value.
-          var id = items[delta].id;
-          if (_value == 'value2') { id += '2'; } // "To date"
-          id += '-' + grain;
-          var attributes = {
-            id: id,
-            onchange: "date_select_onchange(this, '" + items[delta].id + "', '" + grain + "', " + military + ", " + increment + ", " + offset + ")"
-          };
-          switch (grain) {
+              // Build a unique html element id for this select list. Set up an
+              // onclick handler and send it the id of the hidden input that will
+              // hold the date value.
+              var id = items[delta].id;
+              if (_value == 'value2') { id += '2'; } // "To date"
+              id += '-' + grain;
+              var attributes = {
+                id: id,
+                onchange: "date_select_onchange(this, '" + items[delta].id + "', '" + grain + "', " + military + ", " + increment + ", " + offset + ")"
+              };
+              switch (grain) {
 
-            // YEAR
-            case 'year':
-              _widget_year = _date_grain_widget_year(date, instance, attributes, value_set, value2_set, item_date);
-              break;
+                // YEAR
+                case 'year':
+                  _widget_year = _date_grain_widget_year(date, instance, attributes, value_set, value2_set, item_date);
+                  break;
 
-            // MONTH
-            case 'month':
-              _widget_month = _date_grain_widget_month(date, instance, attributes, value_set, value2_set, item_date);
-              break;
+                // MONTH
+                case 'month':
+                  _widget_month = _date_grain_widget_month(date, instance, attributes, value_set, value2_set, item_date);
+                  break;
 
-            // DAY
-            case 'day':
-              _widget_day = _date_grain_widget_day(date, instance, attributes, value_set, value2_set, item_date);
-              break;
+                // DAY
+                case 'day':
+                  _widget_day = _date_grain_widget_day(date, instance, attributes, value_set, value2_set, item_date);
+                  break;
 
-            // HOUR
-            case 'hour':
-              _widget_hour = _date_grain_widget_hour(date, instance, attributes, value_set, value2_set, item_date, military);
+                // HOUR
+                case 'hour':
+                  _widget_hour = _date_grain_widget_hour(date, instance, attributes, value_set, value2_set, item_date, military);
 
-              // Add an am/pm selector if we're not in military time.
-              if (!military) {
-                _widget_ampm = _date_grain_widget_ampm(date, instance, attributes, value_set, value2_set, item_date, military);
+                  // Add an am/pm selector if we're not in military time.
+                  if (!military) {
+                    _widget_ampm = _date_grain_widget_ampm(date, instance, attributes, value_set, value2_set, item_date, military);
+                  }
+                  break;
+
+                // MINUTE
+                case 'minute':
+                  _widget_minute = _date_grain_widget_minute(date, instance, attributes, value_set, value2_set, item_date, _value, increment);
+                  break;
+
+                // SECOND
+                case 'second':
+                  _widget_second = _date_grain_widget_second(date, instance, attributes, value_set, value2_set, item_date, _value);
+                  break;
+
+                default:
+                  console.log('WARNING: date_field_widget_form() - unsupported grain! (' + grain + ')');
+                  break;
               }
-              break;
+            }
+          });
 
-            // MINUTE
-            case 'minute':
-              _widget_minute = _date_grain_widget_minute(date, instance, attributes, value_set, value2_set, item_date, _value, increment);
-              break;
-
-            // SECOND
-            case 'second':
-              _widget_second = _date_grain_widget_second(date, instance, attributes, value_set, value2_set, item_date, _value);
-              break;
-
-            default:
-              console.log('WARNING: date_field_widget_form() - unsupported grain! (' + grain + ')');
-              break;
+          // Show the "from" or "to" label?
+          if (!empty(todate)) {
+            var text = _value != 'value2' ? t('From') : t('To');
+            items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
           }
-        }
-      });
 
-      // Show the "from" or "to" label?
-      if (!empty(todate)) {
-        var text = _value != 'value2' ? t('From') : t('To');
-        items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
+          // Wrap the widget with some better UX.
+          _date_grain_widgets_ux_wrap(
+              items,
+              delta,
+              _widget_year,
+              _widget_month,
+              _widget_day,
+              _widget_hour,
+              _widget_minute,
+              _widget_second,
+              _widget_ampm
+          );
+          break;
+        case 'date_popup':
+        case 'date_text':
+        default:
+          items[delta].type = 'text';
+          break;
       }
-
-      // Wrap the widget with some better UX.
-      _date_grain_widgets_ux_wrap(
-          items,
-          delta,
-          _widget_year,
-          _widget_month,
-          _widget_day,
-          _widget_hour,
-          _widget_minute,
-          _widget_second,
-          _widget_ampm
-      );
-
     });
 
     // If the field base is configured for the "date's timezone handling", add a timezone picker to the widget.
@@ -589,9 +597,16 @@ function _date_grain_widgets_ux_wrap(items, delta, _widget_year, _widget_month, 
       }
       items[delta].children.push(_widget_minute);
     }
-    if (_widget_second) { items[delta].children.push(_widget_second); }
+    if (_widget_second) {
+      if (his_grid) {
+        var _block_class = _widget_minute ? 'ui-block-c' : 'ui-block-b';
+        _widget_second.prefix = '<div class="' + _block_class + '">' + _widget_second.prefix;
+        _widget_second.suffix = '</div>';
+      }
+      items[delta].children.push(_widget_second);
+    }
     if (_widget_ampm) { items[delta].children.push(_widget_ampm); }
-    if (ymd_grid) { items[delta].children.push({ markup: '</div>' }); }
+    if (his_grid) { items[delta].children.push({ markup: '</div>' }); }
   }
   catch (error) { console.log('_date_grain_widgets_ux_wrap', error); }
 }
@@ -757,6 +772,9 @@ function date_select_onchange(input, id, grain, military, increment, offset) {
         break;
       case 'minute':
         date.setMinutes(input_val);
+        break;
+      case 'second':
+        date.setSeconds(input_val);
         break;
     }
 
@@ -980,7 +998,7 @@ function _date_get_item_and_offset(items, delta, _value, value_set, value2_set, 
   catch (error) { console.log('_date_get_item_and_offset', error); }
 }
 
-function _date_widget_check_and_set_defaults(items, delta, instance, d) {
+function _date_widget_check_and_set_defaults(items, delta, instance, todate, d) {
   try {
 
     // Determine if value and value_2 have been set for this item.
@@ -999,7 +1017,7 @@ function _date_widget_check_and_set_defaults(items, delta, instance, d) {
     if (!value_set && (items[delta].default_value == '' || !items[delta].default_value) && instance.settings.default_value != '') {
       items[delta].default_value = instance.settings.default_value;
     }
-    if (!value2_set && (items[delta].default_value2 == '' || !items[delta].default_value2) && instance.settings.default_value2 != '') {
+    if (!value2_set && (!empty(todate)) && (items[delta].default_value2 == '' || !items[delta].default_value2) && instance.settings.default_value2 != '') {
       items[delta].default_value2 = instance.settings.default_value2;
     }
 
@@ -1025,7 +1043,7 @@ function _date_widget_check_and_set_defaults(items, delta, instance, d) {
         items[delta].item.value = items[delta].value;
       }
     }
-    if (!value2_set && items[delta].default_value2 != '') {
+    if (!value2_set && typeof(items[delta].default_value2) != 'undefined' && items[delta].default_value2 != '') {
       switch (items[delta].default_value2) {
         case 'now':
           var now = date_yyyy_mm_dd_hh_mm_ss(date_yyyy_mm_dd_hh_mm_ss_parts(d));
@@ -1082,7 +1100,8 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
 
     //console.log('assemble', arguments);
 
-    field_key.use_delta = false;
+    field_key.use_key = false;
+    field_key.use_delta = true;
 
     // Grab our "to date" setting for the field.
     var todate = field.settings.todate;
@@ -1190,13 +1209,7 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
           }
         }
 
-        if (instance.widget.type == 'date_text') {
-          result[_value].date = date(instance.widget.settings.input_format, d);
-          // Support seconds.
-          result[_value].date = result[_value].date.replace("s", d.getSeconds());
-        }
-        else {
-           // instance.widget.type == 'date_select'.
+        if (instance.widget.type == 'date_select') {
           if (value) {
             switch (grain) {
               case 'year':
@@ -1224,17 +1237,25 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
                 result[_value].minute = '' + parseInt(date.getMinutes());
                 if (result[_value].minute.length == 1) { result[_value].minute = '0' + result[_value].minute; }
                 break;
+              case 'second':
+                result[_value].second = '' + parseInt(date.getSeconds());
+                if (result[_value].second.length == 1) { result[_value].second = '0' + result[_value].second; }
+                break;
             }
           }
+        } else if (instance.widget.type == 'date_popup') {
+        } else {
+          result[_value].date = date(instance.widget.settings.input_format, d);
+          // Support seconds.
+          result[_value].date = result[_value].date.replace("s", d.getSeconds());
         }
       }
 
-      if (instance.widget.type == 'date_text') {
-        _date_set_attribute_on_value(null, null);
-      }
-      else {
-         // instance.widget.type == 'date_select'.
+      if (instance.widget.type == 'date_select') {
         $.each(field.settings.granularity, _date_set_attribute_on_value);
+      } else if (instance.widget.type == 'date_popup') {
+      } else {
+        _date_set_attribute_on_value(null, null);
       }
 
     });
@@ -1309,18 +1330,18 @@ function date_views_exposed_filter(form, form_state, element, filter, field) {
         title: t("Operator"),
         type: "select",
         options: {
-          "&lt;": "Is less than",
-          "&lt;=": "Is less than or equal to",
-          "=": "Is equal to",
-          "!=": "Is not equal to",
-          "&gt;=": "Is greater than or equal to",
-          "&gt;": "Is greater than",
-          "between": "Is between",
-          "not between": "Is not between",
-          "empty": "Is empty (NULL)",
-          "not empty": "Is not empty (NOT NULL)",
-          "regular_expression": "Regular expression",
-          "contains": "Contains"
+          "&lt;": t("Is less than"),
+          "&lt;=": t("Is less than or equal to"),
+          "=": t("Is equal to"),
+          "!=": t("Is not equal to"),
+          "&gt;=": t("Is greater than or equal to"),
+          "&gt;": t("Is greater than"),
+          "between": t("Is between"),
+          "not between": t("Is not between"),
+          "empty": t("Is empty (NULL)"),
+          "not empty": t("Is not empty (NOT NULL)"),
+          "regular_expression": t("Regular expression"),
+          "contains": t("Contains")
         }
       }
     }
