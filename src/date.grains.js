@@ -472,11 +472,11 @@ function _date_grain_widgets_ux_wrap(items, delta, _widget_year, _widget_month, 
           break;
       }
     }
-    if (_widget_ampm) {
-      items[delta].children.push(_widget_ampm);
-    }
     if (his_grid) {
       items[delta].children.push({ markup: '</div>' });
+    }
+    if (_widget_ampm) {
+      items[delta].children.push(_widget_ampm);
     }
   }
   catch (error) { console.log('_date_grain_widgets_ux_wrap', error); }
