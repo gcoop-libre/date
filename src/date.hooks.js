@@ -47,70 +47,63 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
       }
 
       function _date_set_attribute_on_value(grain, value) {
-
-        var d = null;
+        var field_date = null;
         if (_value == 'value') {
+          field_date = new Date(parts[0]);
           if (have_item) {
             var offset = parseInt(form.elements[field.field_name][langcode][delta].item.offset);
             if (offset) { result.offset = offset; }
             if (date_apple_device() && offset) {
-              d = new Date(d.toUTCString());
-              d = d.getTime() / 1000;
-              d -= parseInt(offset);
-              d = new Date(d * 1000);
+              field_date = new Date(field_date.toUTCString());
+              field_date = field_date.getTime() / 1000;
+              field_date -= parseInt(offset);
+              field_date = new Date(field_date * 1000);
             } else if (date_apple_device()) {
               // console.log('--- date_apple_device 1 ---');
-              date = new Date(date_apple_cleanse(parts[0]));
-              date = date.getTime() + (date.getTimezoneOffset() * 60000);
-              date = new Date(date);
-            } else {// 
-              date = new Date(parts[0]);
+              field_date = new Date(date_apple_cleanse(parts[0]));
+              field_date = field_date.getTime() + (field_date.getTimezoneOffset() * 60000);
+              field_date = new Date(field_date);
             }
           } else {
             // console.log('does not have_item', have_item);
             if (date_apple_device() && offset) {
-              date = new Date(date.toUTCString());
-              date = date.getTime() / 1000;
-              date -= parseInt(offset);
-              date = new Date(date * 1000);
+              field_date = new Date(field_date.toUTCString());
+              field_date = field_date.getTime() / 1000;
+              field_date -= parseInt(offset);
+              field_date = new Date(field_date * 1000);
             } else if (date_apple_device()) {
               // console.log('--- date_apple_device 2 ---');
-              date = new Date(date_apple_cleanse(parts[0]));
-              date = date.getTime() + (date.getTimezoneOffset() * 60000);
-              date = new Date(date);
-            } else {
-              date = new Date(parts[0]);
+              field_date = new Date(date_apple_cleanse(parts[0]));
+              field_date = field_date.getTime() + (field_date.getTimezoneOffset() * 60000);
+              field_date = new Date(field_date);
             }
           }
         }
         else if (_value == 'value2') {
+          field_date = new Date(parts[1]);
           if (have_item) {
             var offset2 = parseInt(form.elements[field.field_name][langcode][delta].item.offset2);
             if (offset2) { result.offset2 = offset2; }
             if (date_apple_device() && offset2) {
-              d = new Date(d.toUTCString());
-              d = d.getTime() / 1000;
-              d -= parseInt(offset2);
-              d = new Date(d * 1000);
+              field_date = new Date(field_date.toUTCString());
+              field_date = field_date.getTime() / 1000;
+              field_date -= parseInt(offset2);
+              field_date = new Date(field_date * 1000);
             } else if (date_apple_device()) {
-              date = new Date(date_apple_cleanse(parts[1]));
-              date = date.getTime() + (date.getTimezoneOffset() * 60000);
-              date = new Date(date);
-            } else {
-              date = new Date(parts[1]);
+              field_date = new Date(date_apple_cleanse(parts[1]));
+              field_date = field_date.getTime() + (field_date.getTimezoneOffset() * 60000);
+              field_date = new Date(field_date);
             }
           } else {
             if (date_apple_device() && offset2) {
-              date = new Date(date.toUTCString());
-              date = date.getTime() / 1000;
-              date -= parseInt(offset2);
-              date = new Date(date * 1000);
+              field_date = new Date(field_date.toUTCString());
+              field_date = field_date.getTime() / 1000;
+              field_date -= parseInt(offset2);
+              field_date = new Date(field_date * 1000);
             } else if (date_apple_device()) {
-              date = new Date(date_apple_cleanse(parts[1]));
-              date = date.getTime() + (date.getTimezoneOffset() * 60000);
-              date = new Date(date);
-            } else {
-              date = new Date(parts[1]);
+              field_date = new Date(date_apple_cleanse(parts[1]));
+              field_date = field_date.getTime() + (field_date.getTimezoneOffset() * 60000);
+              field_date = new Date(field_date);
             }
           }
         }
@@ -119,16 +112,16 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
           if (value) {
             switch (grain) {
               case 'year':
-                result[_value].year = date.getFullYear();
+                result[_value].year = field_date.getFullYear();
                 break;
               case 'month':
-                result[_value].month = parseInt(date.getMonth()) + 1;
+                result[_value].month = parseInt(field_date.getMonth()) + 1;
                 break;
               case 'day':
-                result[_value].day = parseInt(date.getDate());
+                result[_value].day = parseInt(field_date.getDate());
                 break;
               case 'hour':
-                result[_value].hour = parseInt(date.getHours());
+                result[_value].hour = parseInt(field_date.getHours());
                 if (!date_military(instance)) {
                   if (result[_value].hour >= 12) {
                     result[_value].hour = result[_value].hour % 12;
@@ -140,20 +133,20 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
                 }
                 break;
               case 'minute':
-                result[_value].minute = '' + parseInt(date.getMinutes());
+                result[_value].minute = '' + parseInt(field_date.getMinutes());
                 if (result[_value].minute.length == 1) { result[_value].minute = '0' + result[_value].minute; }
                 break;
               case 'second':
-                result[_value].second = '' + parseInt(date.getSeconds());
+                result[_value].second = '' + parseInt(field_date.getSeconds());
                 if (result[_value].second.length == 1) { result[_value].second = '0' + result[_value].second; }
                 break;
             }
           }
         } else if (instance.widget.type == 'date_popup') {
         } else {
-          result[_value].date = date(instance.widget.settings.input_format, d);
+          result[_value].date = date(instance.widget.settings.input_format, field_date);
           // Support seconds.
-          result[_value].date = result[_value].date.replace("s", d.getSeconds());
+          result[_value].date = result[_value].date.replace("s", field_date.getSeconds());
         }
       }
 
