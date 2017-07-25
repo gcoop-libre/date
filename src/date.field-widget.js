@@ -3,16 +3,6 @@
  */
 function date_field_widget_form(form, form_state, field, instance, langcode, items, delta, element) {
   try {
-
-    //console.log(form);
-    //console.log(form_state);
-    //console.log(field);
-    //console.log(instance);
-    //console.log(langcode);
-    //console.log(items);
-    //console.log(delta);
-    //console.log(element);
-
     // Convert the item into a hidden field that will have its value populated dynamically by the widget. We'll store
     // the value (and potential value2) within the element using this format: YYYY-MM-DD HH:MM:SS|YYYY-MM-DD HH:MM:SS
     items[delta].type = 'hidden';
@@ -81,6 +71,7 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
           var _widget_minute = null;
           var _widget_second = null;
           var _widget_ampm = null;
+          var _widget_date_order = null;
           $.each(field.settings.granularity, function(grain, value) {
             if (value) {
 
@@ -144,6 +135,16 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
             items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
           }
 
+          if (typeof(instance.widget.settings.input_format) != 'undefined') {
+            var _widget_date_format = instance.widget.settings.input_format;
+
+            if (_widget_date_format == 'site-wide') {
+              _widget_date_format = drupalgap.date_types.short.format;
+            }
+
+            _widget_date_order = date_format_order(_widget_date_format);
+          }
+
           // Wrap the widget with some better UX.
           _date_grain_widgets_ux_wrap(
               items,
@@ -154,7 +155,8 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
               _widget_hour,
               _widget_minute,
               _widget_second,
-              _widget_ampm
+              _widget_ampm,
+              _widget_date_order
           );
           break;
         case 'date_popup':
