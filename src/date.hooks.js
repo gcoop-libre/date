@@ -13,9 +13,6 @@ function date_services_request_pre_postprocess_alter(options, result) {
  */
 function date_assemble_form_state_into_field(entity_type, bundle, form_state_value, field, instance, langcode, delta, field_key, form) {
   try {
-    field_key.use_key = false;
-    field_key.use_delta = true;
-
     // Grab our "to date" setting for the field.
     var todate = field.settings.todate;
 
@@ -161,6 +158,9 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
       }
 
       if (instance.widget.type == 'date_select') {
+        field_key.use_key = false;
+        field_key.use_delta = true;
+
         $.each(field.settings.granularity, _date_set_attribute_on_value);
       } else if (instance.widget.type == 'date_popup') {
       } else {
