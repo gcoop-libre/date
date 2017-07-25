@@ -13,9 +13,6 @@ function date_services_request_pre_postprocess_alter(options, result) {
  */
 function date_assemble_form_state_into_field(entity_type, bundle, form_state_value, field, instance, langcode, delta, field_key, form) {
   try {
-
-    //console.log('assemble', arguments);
-
     field_key.use_key = false;
     field_key.use_delta = true;
 
@@ -24,8 +21,6 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
 
     // Do we have an item?
     var have_item = typeof form.elements[field.field_name][langcode][delta].item !== 'undefined';
-
-    //console.log('BYE', form_state_value, field, instance);
 
     // On iOS we must place a 'T' on the date.
     if (date_apple_device()) { form_state_value = date_apple_cleanse(form_state_value); }
@@ -44,8 +39,6 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
       var parts = [];
       if (todate_already_set) { parts = form_state_value.split('|'); }
       else { parts.push(form_state_value); }
-
-      //console.log('HELLO', form_state_value, parts, form_state_value);
 
       // Add timezone object to result, if necessary.
       if (date_tz_handling_is_date(field)) {
@@ -175,8 +168,6 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
       }
 
     });
-
-    //console.log('RESULT', result);
 
     return result;
   }
