@@ -266,6 +266,70 @@ function date_format_cleanse(format, granularity) {
   return format;
 }
 
+/**
+ * Converts a format to an ordered array of granularity parts.
+ *
+ * Example:
+ *   date_format_order('m/d/Y H:i')
+ *   returns
+ *     [
+ *       'month',
+ *       'day',
+ *       'year',
+ *       'hour',
+ *       'minute',
+ *     ];
+ *
+ * @param {string} format
+ *   A date format string.
+ *
+ * @return {Array}
+ *   An array of ordered granularity elements from the given format string.
+ */
+function date_format_order(format) {
+  order = []
+  if (empty(format)) {
+    return order;
+  }
+
+  for (i = 0; i <= format.length; i++) {
+    switch (format.charAt(i)) {
+      case 'd':
+      case 'j':
+        order.push('day');
+        break;
+
+      case 'F':
+      case 'M':
+      case 'm':
+      case 'n':
+        order.push('month');
+        break;
+
+      case 'Y':
+      case 'y':
+        order.push('year');
+        break;
+
+      case 'g':
+      case 'G':
+      case 'h':
+      case 'H':
+        order.push('hour');
+        break;
+
+      case 'i':
+        order.push('minute');
+        break;
+
+      case 's':
+        order.push('second');
+        break;
+    }
+  }
+  return(order);
+}
+
 function date_item_adjust_offset(d, offset) {
   d = new Date(d.toUTCString());
   d = d.getTime() / 1000;
