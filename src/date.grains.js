@@ -192,7 +192,7 @@ function _date_grain_widget_hour(date, instance, attributes, value_set, value2_s
       (typeof(instance.widget.settings.text_parts) != 'undefined') &&
       ($.inArray('hour', instance.widget.settings.text_parts) != -1)
     ) {
-      attributes['value'] = hour;
+      attributes['value'] = '' + hour;
       attributes['maxlength'] = 2;
       attributes['onblur'] = attributes['onchange'];
       delete(attributes['onchange']);
@@ -263,7 +263,7 @@ function _date_grain_widget_minute(date, instance, attributes, value_set, value2
       (typeof(instance.widget.settings.text_parts) != 'undefined') &&
       ($.inArray('minute', instance.widget.settings.text_parts) != -1)
     ) {
-      attributes['value'] = minute;
+      attributes['value'] = '' + minute;
       attributes['maxlength'] = 2;
       attributes['onblur'] = attributes['onchange'];
       delete(attributes['onchange']);
@@ -320,7 +320,7 @@ function _date_grain_widget_second(date, instance, attributes, value_set, value2
       (typeof(instance.widget.settings.text_parts) != 'undefined') &&
       ($.inArray('second', instance.widget.settings.text_parts) != -1)
     ) {
-      attributes['value'] = second;
+      attributes['value'] = '' + second;
       attributes['maxlength'] = 2;
       attributes['onblur'] = attributes['onchange'];
       delete(attributes['onchange']);
