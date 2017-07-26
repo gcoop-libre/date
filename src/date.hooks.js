@@ -20,7 +20,9 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
     var have_item = typeof form.elements[field.field_name][langcode][delta].item !== 'undefined';
 
     // On iOS we must place a 'T' on the date.
-    if (date_apple_device()) { form_state_value = date_apple_cleanse(form_state_value); }
+    if (instance.widget.type == 'date_select') {
+      if (date_apple_device()) { form_state_value = date_apple_cleanse(form_state_value); }
+    }
     var result = {};
 
     var values = ['value'];
@@ -142,24 +144,33 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
                 break;
             }
           }
-        } else if (instance.widget.type == 'date_popup') {
-        } else {
-          result[_value].date = date(instance.widget.settings.input_format, field_date);
-          // Support seconds.
-          result[_value].date = result[_value].date.replace("s", field_date.getSeconds());
         }
       }
 
+      field_key.use_key = false;
+      field_key.use_delta = true;
       if (instance.widget.type == 'date_select') {
-        field_key.use_key = false;
-        field_key.use_delta = true;
-
         $.each(field.settings.granularity, _date_set_attribute_on_value);
       } else if (instance.widget.type == 'date_popup') {
       } else {
-        _date_set_attribute_on_value(null, null);
-      }
+        var field_value = '';
+        if (_value == 'value') {
+          field_value = parts[0];
+        }
+        else if (_value == 'value2') {
+          field_value = parts[1];
 
+          // The show_todate field must be sended when the todate is required
+          // or when the value2 is set, so it will be saved
+          if (
+            (todate == 'required') ||
+            ((todate == 'optional') && (!empty(field_value)))
+          ) {
+            result['show_todate'] = true;
+          }
+        }
+        result[_value] = { 'date': field_value };
+      }
     });
 
     return result;
