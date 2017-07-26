@@ -32,12 +32,12 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
     // Grab the current date.
     if (date_apple_device()) {
       // console.log('--- APPLE DEVICE --- (Grab the current date)');
-      var date = new Date();
-      var date = date.getTime() + (date.getTimezoneOffset() * 60000);
-      var date = new Date(date);
+      var current_date = new Date();
+      var current_date = current_date.getTime() + (current_date.getTimezoneOffset() * 60000);
+      var current_date = new Date(current_date);
     } else {
       // console.log('--- NON APPLE DEVICE --- (Grab the current date)');
-      var date = new Date();
+      var current_date = new Date();
     }
 
     // Depending if we are collecting an end date or not, build a widget for each date value.
@@ -89,37 +89,37 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
 
                 // YEAR
                 case 'year':
-                  _widget_year = _date_grain_widget_year(date, instance, attributes, value_set, value2_set, item_date);
+                  _widget_year = _date_grain_widget_year(current_date, instance, attributes, value_set, value2_set, item_date);
                   break;
 
                 // MONTH
                 case 'month':
-                  _widget_month = _date_grain_widget_month(date, instance, attributes, value_set, value2_set, item_date);
+                  _widget_month = _date_grain_widget_month(current_date, instance, attributes, value_set, value2_set, item_date);
                   break;
 
                 // DAY
                 case 'day':
-                  _widget_day = _date_grain_widget_day(date, instance, attributes, value_set, value2_set, item_date);
+                  _widget_day = _date_grain_widget_day(current_date, instance, attributes, value_set, value2_set, item_date);
                   break;
 
                 // HOUR
                 case 'hour':
-                  _widget_hour = _date_grain_widget_hour(date, instance, attributes, value_set, value2_set, item_date, military);
+                  _widget_hour = _date_grain_widget_hour(current_date, instance, attributes, value_set, value2_set, item_date, military);
 
                   // Add an am/pm selector if we're not in military time.
                   if (!military) {
-                    _widget_ampm = _date_grain_widget_ampm(date, instance, attributes, value_set, value2_set, item_date, military);
+                    _widget_ampm = _date_grain_widget_ampm(current_date, instance, attributes, value_set, value2_set, item_date, military);
                   }
                   break;
 
                 // MINUTE
                 case 'minute':
-                  _widget_minute = _date_grain_widget_minute(date, instance, attributes, value_set, value2_set, item_date, _value, increment);
+                  _widget_minute = _date_grain_widget_minute(current_date, instance, attributes, value_set, value2_set, item_date, _value, increment);
                   break;
 
                 // SECOND
                 case 'second':
-                  _widget_second = _date_grain_widget_second(date, instance, attributes, value_set, value2_set, item_date, _value);
+                  _widget_second = _date_grain_widget_second(current_date, instance, attributes, value_set, value2_set, item_date, _value);
                   break;
 
                 default:
@@ -135,15 +135,8 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
             items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
           }
 
-          if (typeof(instance.widget.settings.input_format) != 'undefined') {
-            var _widget_date_format = instance.widget.settings.input_format;
-
-            if (_widget_date_format == 'site-wide') {
-              _widget_date_format = drupalgap.date_types.short.format;
-            }
-
-            _widget_date_order = date_format_order(_widget_date_format);
-          }
+          var _widget_date_format = date_format_widget(field, instance);
+          _widget_date_order = date_format_order(_widget_date_format);
 
           // Wrap the widget with some better UX.
           _date_grain_widgets_ux_wrap(
@@ -160,9 +153,46 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
           );
           break;
         case 'date_popup':
+          items[delta].type = 'text';
+          break;
         case 'date_text':
         default:
-          items[delta].type = 'text';
+          // Show the "from" or "to" label?
+          if (!empty(todate)) {
+            var text = _value != 'value2' ? t('From') : t('To');
+            items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
+          }
+
+          var id = items[delta].id;
+          if (_value == 'value2') {
+            id += '2';
+          }
+
+          var suffix = '';
+          var attributes = {
+            id: id,
+            onblur: "date_text_onchange(this, '" + items[delta].id + "', " + military + ", " + increment + ", " + offset + ")"
+          };
+
+          var _widget_date_format = date_format_widget(field, instance);
+          if (!empty(_widget_date_format)) {
+            suffix = '<div class="description">' + format_string(t('Format: {1}'), date(_widget_date_format)) + '</div>';
+            attributes['value'] = date(_widget_date_format, item_date.getTime());
+
+            var current_parts = items[delta].value.split('|');
+            if (_value == 'value2') {
+              current_parts[1] = attributes['value'];
+            }
+            else {
+              current_parts[0] = attributes['value'];
+            }
+            items[delta].value = current_parts.join('|');
+          }
+          items[delta].children.push({
+            suffix: suffix,
+            type: 'textfield',
+            attributes: attributes
+          });
           break;
       }
     });
