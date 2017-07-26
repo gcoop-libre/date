@@ -23,6 +23,173 @@ function date_prepare(value, offset) {
 }
 
 /**
+ *  Get the date format to be used on a widget
+ *
+ *  @param  {Object} field
+ *  @param  {Object} instance
+ *  @return {String}
+ */
+function date_format_widget(field, instance) {
+  try {
+    var format = '';
+
+    if (typeof(instance.widget.settings.input_format) != 'undefined') {
+      format = instance.widget.settings.input_format;
+
+      if (format == 'site-wide') {
+        format = drupalgap.date_types.short.format;
+      }
+
+      // Limit format according to the field's granularity
+      format = date_limit_format(format, field.settings.granularity);
+    }
+
+    return format;
+  }
+  catch (error) { console.log('date_format_widget() - ' + error); }
+}
+
+/**
+ * Limits a date format to include only elements from a given granularity array.
+ *
+ * Example:
+ *   date_limit_format('F j, Y - H:i', { 'year':'year', 'month':'month', 'day':'day', 'hour':0, 'minute':0, 'second':0 });
+ *   returns 'F j, Y'
+ *
+ * @param {String} format
+ *   A date format string.
+ * @param {array} granularity
+ *   An array of allowed date parts, all others will be removed.
+ *
+ * @return {String}
+ *   The format string with all other elements removed.
+ */
+function date_limit_format(format, granularity) {
+  try {
+    // If punctuation has been escaped, remove the escaping.
+    format = format.replace(/\\-/g, '-');
+    format = format.replace(/\\:/g, ':');
+    format = format.replace(/\\'/g, "'");
+    format = format.replace(/\\. /g, ' . ');
+    format = format.replace(/\\,/g, ',');
+
+    // Get the 'T' out of ISO date formats that don't have both date and time.
+    if ((!date_has_time(granularity)) || (!date_has_date(granularity))) {
+      format = format.replace(/\\T/g, ' ');
+      format = format.replace(/T/g, ' ');
+    }
+
+    reversed_format = format.split('').reverse().join('');
+    if (!date_has_time(granularity)) {
+      reversed_format = reversed_format.replace(/([a|A](?!\\\\))/g, '');
+    }
+    if ((typeof(granularity['year']) == 'undefined') || (empty(granularity['year']))) {
+      reversed_format = reversed_format.replace(/([Yy](?!\\\\)\s?[\-/\.,:]?)/g, '');
+    }
+    if ((typeof(granularity['month']) == 'undefined') || (empty(granularity['month']))) {
+      reversed_format = reversed_format.replace(/([FMmn](?!\\\\)\s?[\-/\.,:]?)/g, '');
+    }
+    if ((typeof(granularity['day']) == 'undefined') || (empty(granularity['day']))) {
+      reversed_format = reversed_format.replace(/([l|D|d|dS|j|jS|N|w|W|z]{1,2}(?!\\\\)\s?[\-/\.,:]?)/g, '');
+    }
+    if ((typeof(granularity['hour']) == 'undefined') || (empty(granularity['hour']))) {
+      reversed_format = reversed_format.replace(/([HhGg](?!\\\\)\s?[\-/\.,:]?)/g, '');
+    }
+    if ((typeof(granularity['minute']) == 'undefined') || (empty(granularity['minute']))) {
+      reversed_format = reversed_format.replace(/([i](?!\\\\)\s?[\-/\.,:]?)/g, '');
+    }
+    if ((typeof(granularity['second']) == 'undefined') || (empty(granularity['second']))) {
+      reversed_format = reversed_format.replace(/([s](?!\\\\)\s?[\-/\.,:]?)/g, '');
+    }
+    if ((typeof(granularity['timezone']) == 'undefined') || (empty(granularity['timezone']))) {
+      reversed_format = reversed_format.replace(/([TOZPe](?!\\\\)\s?[\-/\.,:]?)/g, '');
+    }
+    format = reversed_format.split('').reverse().join('');
+
+    // Remove empty parentheses, brackets, pipes.
+    format = format.replace(/(\(\))/g, '');
+    format = format.replace(/(\[\])/g, '');
+    format = format.replace(/(\|\|)/g, '');
+
+    // Remove selected values from string.
+    format = $.trim(format);
+    // Remove orphaned punctuation at the beginning of the string.
+    format = format.replace(/^([\-/\.,:\'])/, '');
+    // Remove orphaned punctuation at the end of the string.
+    format = format.replace(/([\-/,:\']$)/, '');
+    format = format.replace(/(\\$)/, '');
+
+    // Trim any whitespace from the result.
+    format = $.trim(format);
+
+    // After removing the non-desired parts of the format, test if the only things
+    // left are escaped, non-date, characters. If so, return nothing.
+    // Using S instead of w to pick up non-ASCII characters.
+    test = format;
+    test = $.trim(test.replace('(\\\\\S{1,3})u', ''));
+    if (empty(test)) {
+      format = '';
+    }
+
+    return format;
+  }
+  catch (error) { console.log('date_limit_format() - ' + error); }
+}
+
+/**
+ * Determines if the granularity contains a time portion.
+ *
+ * @param {array} granularity
+ *   An array of allowed date parts, all others will be removed.
+ *
+ * @return {bool}
+ *   TRUE if the granularity contains a time portion, FALSE otherwise.
+ */
+function date_has_time(granularity) {
+  try {
+    var has_time = false;
+
+    if (
+      ((typeof(granularity['hour']) != 'undefined') && (!empty(granularity['hour']))) ||
+      ((typeof(granularity['minute']) != 'undefined') && (!empty(granularity['minute']))) ||
+      ((typeof(granularity['second']) != 'undefined') && (!empty(granularity['second'])))
+    ) {
+      has_time = true;
+    }
+
+    return has_time;
+  }
+  catch (error) { console.log('date_has_time() - ' + error); }
+}
+
+/**
+ * Determines if the granularity contains a date portion.
+ *
+ * @param {array} granularity
+ *   An array of allowed date parts, all others will be removed.
+ *
+ * @return {bool}
+ *   TRUE if the granularity contains a date portion, FALSE otherwise.
+ */
+function date_has_date(granularity) {
+  try {
+    var has_date = false;
+
+    if (
+      ((typeof(granularity['year']) != 'undefined') && (!empty(granularity['year']))) ||
+      ((typeof(granularity['month']) != 'undefined') && (!empty(granularity['month']))) ||
+      ((typeof(granularity['day']) != 'undefined') && (!empty(granularity['day'])))
+    ) {
+      has_date = true;
+    }
+
+    return has_date;
+  }
+  catch (error) { console.log('date_has_date() - ' + error); }
+}
+
+
+/**
  * Returns true if the device is an Apple device
  */
 function date_apple_device() {
@@ -175,6 +342,49 @@ function date_select_onchange(input, id, grain, military, increment, offset) {
     if (!todate) { parts[0] = _value; }
     else { parts[1] = _value;  }
     //console.log('value', _value, date, parts);
+    $('#' + id).val(parts.join('|'));
+  }
+  catch (error) { drupalgap_error(error); }
+}
+
+/**
+ * Handles the onblur event for date text fields. It is given a reference
+ * to the input field and the id of the hidden date field
+ */
+function date_text_onchange(input, id, military, increment, offset) {
+  try {
+
+    // @TODO - we may need the time zone offset placed here as well!
+
+    // Are we setting a "to date"?
+    var todate = $(input).attr('id').indexOf('value2') != -1 ? true : false;
+
+    // Grab the current value (which may include both the "from" and "to" dates
+    // separated by a pipe '|')
+    var current_val = $('#' + id).val();
+
+    // Is there a "to date" already set on the current value?
+    var todate_already_set = current_val.indexOf('|') != -1 ? true : false;
+
+    // Prepare the value part(s).
+    var parts = [];
+    if (todate_already_set) {
+      parts = current_val.split('|');
+    }
+    else {
+      parts.push(current_val);
+    }
+
+    var input_val = $(input).val();
+
+    // Finally set the value.
+    if (!todate) {
+      parts[0] = input_val;
+    }
+    else {
+      parts[1] = input_val;
+    }
+
     $('#' + id).val(parts.join('|'));
   }
   catch (error) { drupalgap_error(error); }
