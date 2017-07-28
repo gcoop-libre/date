@@ -16,3 +16,10 @@ Drupal.modules.contrib['date'] = {
   minified: true
 };
 ```
+
+Dependencies
+============
+
+The Date Module needs:
+
+* [cordova-plugin-datepicker](https://github.com/VitaliiBlagodir/cordova-plugin-datepicker)
