@@ -188,6 +188,137 @@ function date_has_date(granularity) {
   catch (error) { console.log('date_has_date() - ' + error); }
 }
 
+/**
+ *  Get the date for the current value of a field, or just default to now.
+ *
+ *  @param  {String}  id
+ *  @param  {Boolean}  todate
+ *  @return {Date}  Date JS Object with the field's value
+ */
+function date_field_date(id, todate) {
+  var field_date = null;
+
+  // Grab the current value (which may include both the "from" and "to" dates
+  // separated by a pipe '|')
+  var current_val = $('#' + id).val();
+
+  // Is there a "to date" already set on the current value?
+  var todate_already_set = current_val.indexOf('|') != -1 ? true : false;
+
+  // Prepare the value part(s).
+  var parts = [];
+  if (todate_already_set) {
+    parts = current_val.split('|');
+  }
+  else {
+    parts.push(current_val);
+  }
+
+  if (!current_val) {
+    if (date_apple_device()) {
+      item_date = new Date();
+      item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+      field_date = new Date(item_date);
+    } else {
+      field_date = new Date();
+    }
+  } else {
+    // In case they set the "to date" before the "from date", give the "from date" a default value.
+    if (!todate && empty(parts[0])) { parts[0] = date_yyyy_mm_dd_hh_mm_ss(); }
+
+    // Fixes iOS bug spaces must be replaced with T's
+    if (date_apple_device() && offset) {
+      // TODO  -- update to reflect code below
+      field_date = date_item_adjust_offset(field_date, offset);
+    } else if (date_apple_device()) {
+      if (!todate) {
+        item_date = new Date(date_apple_cleanse(parts[0]));
+        item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+        field_date = new Date(item_date);
+      }
+      else {
+        if (todate_already_set) {
+          item_date = new Date(date_apple_cleanse(parts[1]));
+          item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
+          field_date = new Date(item_date);
+        }
+      }
+    } else {
+      if (!todate) {
+        field_date = new Date(parts[0]);
+      } else {
+        if (todate_already_set) {
+          field_date = new Date(parts[1]);
+        } else {
+          field_date = new Date();
+        }
+      }
+    }
+  }
+
+  return field_date;
+}
+
+/**
+ *  Open the Date PopUp widget
+ *
+ *  @param  {Object}  input
+ *  @param  {String}  type
+ *  @param  {String}  format
+ *  @param  {String}  id
+ *  @param  {Boolean}  military
+ *  @param  {Int}  increment
+ *  @param  {Int}  offset
+ */
+function date_popup_open(input, type, format, id, military, increment, offset) {
+  // Are we setting a "to date"?
+  var todate = $(input).attr('id').indexOf('value2') != -1 ? true : false;
+
+  var field_date = date_field_date(id, todate);
+
+	datePicker.show({
+    date: field_date,
+    mode: type,
+    minuteInterval: increment
+  }, function(selected_date) {
+    if (type == 'date') {
+      field_date.setFullYear(selected_date.getFullYear(), selected_date.getMonth(), selected_date.getDate());
+    }
+    else if (type == 'time') {
+      field_date.setHours(selected_date.getHours());
+      field_date.setMinutes(selected_date.getMinutes());
+      field_date.setSeconds(selected_date.getSeconds());
+    }
+
+    // Grab the current value (which may include both the "from" and "to" dates
+    // separated by a pipe '|')
+    var current_val = $('#' + id).val();
+
+    // Is there a "to date" already set on the current value?
+    var todate_already_set = current_val.indexOf('|') != -1 ? true : false;
+
+    // Prepare the value part(s).
+    var parts = [];
+    if (todate_already_set) {
+      parts = current_val.split('|');
+    }
+    else {
+      parts.push(current_val);
+    }
+
+    // Finally set the value.
+    var _value = date_yyyy_mm_dd_hh_mm_ss(date_yyyy_mm_dd_hh_mm_ss_parts(field_date));
+    if (!todate) {
+      parts[0] = _value;
+    }
+    else {
+      parts[1] = _value;
+    }
+
+    $('#' + id).val(parts.join('|'));
+    $(input).val(date(format, field_date.getTime()));
+  });
+}
 
 /**
  * Returns true if the device is an Apple device
@@ -234,111 +365,54 @@ function date_select_onchange(input, id, grain, military, increment, offset) {
     // Are we setting a "to date"?
     var todate = $(input).attr('id').indexOf('value2') != -1 ? true : false;
 
-    // Grab the current value (which may include both the "from" and "to" dates
-    // separated by a pipe '|')
-    var current_val = $('#' + id).val();
-
-    // Is there a "to date" already set on the current value?
-    var todate_already_set = current_val.indexOf('|') != -1 ? true : false;
-
-    // Prepare the value part(s).
-    var parts = [];
-    if (todate_already_set) { parts = current_val.split('|'); }
-    else { parts.push(current_val); }
-
-    // Get the date for the current value, or just default to now.
-    //console.log('parts before', parts);
-    var date = null;
-    if (!current_val) {
-      if (date_apple_device()) {
-        item_date = new Date();
-        item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
-        date = new Date(item_date);
-      } else {
-        date = new Date();
-      }
-    } else {
-
-      // In case they set the "to date" before the "from date", give the "from date" a default value.
-      if (!todate && empty(parts[0])) { parts[0] = date_yyyy_mm_dd_hh_mm_ss(); }
-
-      //Fixes iOS bug spaces must be replaced with T's
-      if (date_apple_device() && offset) {
-        // TODO  -- update to reflect code below
-        date = date_item_adjust_offset(date, offset);
-      } else if (date_apple_device()) {
-        if (!todate) {
-          item_date = new Date(date_apple_cleanse(parts[0]));
-          item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
-          date = new Date(item_date);
-        }
-        else {
-          if (todate_already_set) {
-            item_date = new Date(date_apple_cleanse(parts[1]));
-            item_date = item_date.getTime() + (item_date.getTimezoneOffset() * 60000);
-            date = new Date(item_date);
-          }
-        }
-      } else {
-        if (!todate) {
-          date = new Date(parts[0]);
-        } else {
-          if (todate_already_set) {
-            date = new Date(parts[1]);
-          } else {
-            date = new Date();
-          }
-        }
-      }
-    }
-    //console.log('parts after', parts);
+    var field_date = date_field_date(id, todate);
 
     var input_val = $(input).val();
     switch (grain) {
       case 'year':
-        date.setYear(input_val);
+        field_date.setYear(input_val);
         break;
       case 'month':
-        date.setMonth(input_val - 1);
+        field_date.setMonth(input_val - 1);
         break;
       case 'day':
-        date.setDate(input_val);
+        field_date.setDate(input_val);
         break;
       case 'hour':
         if (!military) {
-          var currenthour = date.getHours();
+          var currenthour = field_date.getHours();
           if (input_val == 'pm') {
-            if (date.getHours() < 12) { date.setHours(date.getHours() + 12); }
-            else { date.setHours(date.getHours()); }
+            if (field_date.getHours() < 12) { field_date.setHours(field_date.getHours() + 12); }
+            else { field_date.setHours(field_date.getHours()); }
           }
-          else if (input_val == 'am') { date.setHours(date.getHours() - 12); }
+          else if (input_val == 'am') { field_date.setHours(field_date.getHours() - 12); }
 
           input_val = parseInt(input_val);
           if (input_val >= 0 && currenthour > 12) {
-            date.setHours(input_val + 12);
+            field_date.setHours(input_val + 12);
           } else if (input_val >= 0 && currenthour < 12) {
-            date.setHours(input_val);
+            field_date.setHours(input_val);
           } else if (input_val >= 0 && currenthour == 12) {
-            date.setHours(0);
+            field_date.setHours(0);
           }
         }
-        else { date.setHours(input_val); }
+        else { field_date.setHours(input_val); }
         break;
       case 'minute':
-        date.setMinutes(input_val);
+        field_date.setMinutes(input_val);
         break;
       case 'second':
-        date.setSeconds(input_val);
+        field_date.setSeconds(input_val);
         break;
     }
 
     // Adjust the minutes.
     //console.log('before', date);
-    date.setMinutes(_date_minute_increment_adjust(increment, date.getMinutes()));
+    field_date.setMinutes(_date_minute_increment_adjust(increment, field_date.getMinutes()));
     //console.log('after', date);
 
     // Finally set the value.
-    var _value = date_yyyy_mm_dd_hh_mm_ss(date_yyyy_mm_dd_hh_mm_ss_parts(date));
+    var _value = date_yyyy_mm_dd_hh_mm_ss(date_yyyy_mm_dd_hh_mm_ss_parts(field_date));
     if (!todate) { parts[0] = _value; }
     else { parts[1] = _value;  }
     //console.log('value', _value, date, parts);

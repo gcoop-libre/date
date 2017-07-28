@@ -56,6 +56,12 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
       //  var difference = drupalgap.time_zones[timezone] - offset;
       //}
 
+			// Show the "from" or "to" label?
+			if (!empty(todate)) {
+				var text = _value != 'value2' ? t('From') : t('To');
+				items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
+			}
+
       // Are we doing a 12 or 24 hour format?
       var military = date_military(instance);
 
@@ -129,12 +135,6 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
             }
           });
 
-          // Show the "from" or "to" label?
-          if (!empty(todate)) {
-            var text = _value != 'value2' ? t('From') : t('To');
-            items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
-          }
-
           var _widget_date_format = date_format_widget(field, instance);
           _widget_date_order = date_format_order(_widget_date_format);
 
@@ -153,16 +153,87 @@ function date_field_widget_form(form, form_state, field, instance, langcode, ite
           );
           break;
         case 'date_popup':
-          items[delta].type = 'text';
+          var id = items[delta].id;
+          if (_value == 'value2') {
+            id += '2';
+          }
+
+          var _widget_date = null;
+          var _widget_time = null;
+
+          var _widget_date_format = date_format_widget(field, instance);
+          if (date_has_date(field.settings.granularity)) {
+            var _widget_date_granularity = JSON.parse(JSON.stringify(field.settings.granularity));
+            _widget_date_granularity['hour'] = 0;
+            _widget_date_granularity['minute'] = 0;
+            _widget_date_granularity['second'] = 0;
+
+            var _widget_date_date_format = date_limit_format(_widget_date_format, _widget_date_granularity);
+
+            var suffix = '';
+            var attributes = {
+              id: id + '-date',
+              readonly: 'readonly',
+              onclick: "date_popup_open(this, 'date', '" + _widget_date_date_format + "', '" + items[delta].id + "', " + military + ", " + increment + ", " + offset + ");"
+            };
+
+            if (!empty(_widget_date_date_format)) {
+              suffix = '<div class="description">' + format_string(t('Format: {1}'), date(_widget_date_date_format)) + '</div>';
+              attributes['value'] = date(_widget_date_date_format, item_date.getTime());
+            }
+            _widget_date = {
+              prefix: theme('date_label', { title: t('Date') }),
+              suffix: suffix,
+              type: 'textfield',
+              attributes: attributes
+            };
+          }
+          if (date_has_time(field.settings.granularity)) {
+            var _widget_time_granularity = JSON.parse(JSON.stringify(field.settings.granularity));
+            _widget_time_granularity['year'] = 0;
+            _widget_time_granularity['month'] = 0;
+            _widget_time_granularity['day'] = 0;
+
+            var _widget_date_time_format = date_limit_format(_widget_date_format, _widget_time_granularity);
+
+            var suffix = '';
+            var attributes = {
+              id: id + '-time',
+              readonly: 'readonly',
+              onclick: "date_popup_open(this, 'time', '" + _widget_date_time_format + "', '" + items[delta].id + "', " + military + ", " + increment + ", " + offset + ");"
+            };
+
+            if (!empty(_widget_date_time_format)) {
+              suffix = '<div class="description">' + format_string(t('Format: {1}'), date(_widget_date_time_format)) + '</div>';
+              attributes['value'] = date(_widget_date_time_format, item_date.getTime());
+            }
+            _widget_time = {
+              prefix: theme('date_label', { title: t('Time') }),
+              suffix: suffix,
+              type: 'textfield',
+              attributes: attributes
+            };
+          }
+
+          if ((_widget_date) && (_widget_time)) {
+            items[delta].children.push({ markup: '<div class="ui-grid-a">' });
+            _widget_date.prefix = '<div class="ui-block-a">' + _widget_date.prefix;
+            _widget_date.suffix += '</div>';
+            _widget_time.prefix = '<div class="ui-block-b">' + _widget_time.prefix;
+            _widget_time.suffix += '</div>';
+          }
+          if (_widget_date) {
+            items[delta].children.push(_widget_date);
+          }
+          if (_widget_time) {
+            items[delta].children.push(_widget_time);
+          }
+          if ((_widget_date) && (_widget_time)) {
+            items[delta].children.push({ markup: '</div>' });
+          }
           break;
         case 'date_text':
         default:
-          // Show the "from" or "to" label?
-          if (!empty(todate)) {
-            var text = _value != 'value2' ? t('From') : t('To');
-            items[delta].children.push({ markup: theme('header', { text: text + ': ' }) });
-          }
-
           var id = items[delta].id;
           if (_value == 'value2') {
             id += '2';

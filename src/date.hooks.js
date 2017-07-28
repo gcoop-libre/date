@@ -152,6 +152,54 @@ function date_assemble_form_state_into_field(entity_type, bundle, form_state_val
       if (instance.widget.type == 'date_select') {
         $.each(field.settings.granularity, _date_set_attribute_on_value);
       } else if (instance.widget.type == 'date_popup') {
+        result[_value] = {};
+
+        var field_value = '';
+        if (_value == 'value') {
+          if (date_apple_device()) {
+            field_value = new Date(date_apple_cleanse(parts[0]));
+          }
+          else {
+            field_value = new Date(parts[0]);
+          }
+        }
+        else if (_value == 'value2') {
+          if (date_apple_device()) {
+            field_value = new Date(date_apple_cleanse(parts[1]));
+          }
+          else {
+            field_value = new Date(parts[1]);
+          }
+
+          // The show_todate field must be sended when the todate is required
+          // or when the value2 is set, so it will be saved
+          if (
+            (todate == 'required') ||
+            ((todate == 'optional') && (typeof(field_value) == 'object'))
+          ) {
+            result['show_todate'] = true;
+          }
+        }
+
+        var _widget_date_format = date_format_widget(field, instance);
+        if (date_has_date(field.settings.granularity)) {
+          var _widget_date_granularity = JSON.parse(JSON.stringify(field.settings.granularity));
+          _widget_date_granularity['hour'] = 0;
+          _widget_date_granularity['minute'] = 0;
+          _widget_date_granularity['second'] = 0;
+
+          var _widget_date_date_format = date_limit_format(_widget_date_format, _widget_date_granularity);
+          result[_value]['date'] = date(_widget_date_date_format, field_value.getTime());
+        }
+        if (date_has_time(field.settings.granularity)) {
+          var _widget_time_granularity = JSON.parse(JSON.stringify(field.settings.granularity));
+          _widget_time_granularity['year'] = 0;
+          _widget_time_granularity['month'] = 0;
+          _widget_time_granularity['day'] = 0;
+
+          var _widget_date_time_format = date_limit_format(_widget_date_format, _widget_time_granularity);
+          result[_value]['time'] = date(_widget_date_time_format, field_value.getTime());
+        }
       } else {
         var field_value = '';
         if (_value == 'value') {
