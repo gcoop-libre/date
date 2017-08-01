@@ -1,3 +1,33 @@
+var date_words = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+  'Sun',
+  'Mon',
+  'Tue',
+  'Wed',
+  'Thu',
+  'Fri',
+  'Sat',
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday'
+];
+
+
 /**
  *
  * @param value
@@ -815,4 +845,11 @@ function _date_widget_check_and_set_defaults(items, delta, instance, todate, d) 
     };
   }
   catch (error) { console.log('_date_widget_check_and_set_defaults', error); }
+}
+
+function date_translate(date) {
+  var regex = new RegExp(date_words.join('|'),"gi");
+  return date.replace(regex, function (str) {
+    return t(str);
+  });
 }
